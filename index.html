@@ -819,25 +819,12 @@
                 
                 // Лейкоциты
                 if (params.wbc != null) {
-    const val = parseFloat(params.wbc);
-    let points = 0;
-    
-    if (!isNaN(val)) {
-        if (val > 39.9 || val < 1) points = 4;
-        else if ((val >= 25 && val <= 39.9) || (val >= 1 && val <= 2.9)) points = 2;
-        else if ((val >= 17 && val <= 24.9) || (val >= 3 && val <= 5.6)) points = 1;
+                    let points = 0;
+                    if (params.wbc > 39.9 || params.wbc < 1) points = 4;
+                    else if ((params.wbc >= 25 && params.wbc <= 39.9) || (params.wbc >= 1 && params.wbc <= 2.9)) points = 2;
+                    else if ((params.wbc >= 17 && params.wbc <= 24.9) || (params.wbc >= 3 && params.wbc <= 5.6)) points = 1;
         // Диапазон 5.7-16.9 остается 0 баллов
     }
-    
-    score += points;
-    
-    // Правильное склонение для всех чисел
-    const lastDigit = points % 10;
-    const suffix = points === 1 ? 'балл' : 
-                   (lastDigit >= 2 && lastDigit <= 4) ? 'балла' : 'баллов';
-    
-    details.push(`Лейкоциты: ${points} ${suffix}`);
-}
                 
                 // Боль в животе
                 let painPoints = params.pain === 'yes' ? 2 : 0;
