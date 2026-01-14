@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- PWA мета-теги -->
+    <title>Калькулятор Сепсиса PWA</title>
+    <meta name="theme-color" content="#667eea">
+    <meta name="description" content="PWA калькулятор сепсиса с SOS и omqSOFA">
+    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogItCa0LDQu9C10L3RgtCw0Y8g0YHQtdC/0LhRgdCwIiwKICAic2hvcnRfbmFtZSI6ICJTZXBzaXNDYWxjIiwKICAiZGVzY3JpcHRpb24iOiAi0JrQsNC70LXQvdGC0LDRjyDQsdC10L/QuFGB0LAg0LrQsNC60LjRgdCw0L3RgtCw0Y8g0LIg0YHRhdC10LnRgiBTT1Mg0L4gb21xU09GQSIsCiAgInN0YXJ0X3VybCI6ICIuIiwKICAiZGlzcGxheSI6ICJzdGFuZGFsb25lIiwKICAiYmFja2dyb3VuZF9jb2xvciI6ICIjNjY3ZWVhIiwKICAidGhlbWVfY29sb3IiOiAiIzY2N2VlYSIsCiAgImljb25zIjogWwogICAgewogICAgICAic3JjIjogImRhdGE6aW1hZ2UvcG5nO2Jhc2U2NCxpVkJPUncwS0dnb0FBQUFOU1VoRVVnQUFBREVBQUFBdENBWUFBQURqM1Q5NEFBQUFBWE5TUjBJQXJzNGM2UUFBQUNKSlJFRlVlQUh0bloyMUFBQ3cwVWxFUVZSNG5PM1o4cjNNVFlXSkpvYVl4WkNabGNtRm1jVlViN0tkR0hnczJCMTlDVFZqak11czIxQlJYUmN3MlI5d01SazdEaGQzNlNiRXB3VXB1c0tCSFhWdXRrZG54cVlxOGVpVmppZmJMSWtZa1h5WUpqa2VpYzRVZVlJWW1TWmtQVVl1WUpSaUtpUUp5WWtZWll5a0srY2dvS0dvVVJBZ0JRbUlRQVFvR0tRSkJJZ0d1TWdZQUUyQVJtZ0FHc0lBd0NBQUFnQ0J3QUdRa0JJQ0I3S1FJQUp6b2dBQUFBQVNVVk9SSzVDWUlJPSIsCiAgICAgICJzaXplcyI6ICIxOTJ4MTkyIiwKICAgICAgInR5cGUiOiAiaW1hZ2UvcG5nIgogICAgfQogIF0KfQ==">
+    
+    <!-- iOS мета-теги -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Сепсис Кальк">
+    
+    <style>
+        /* СБРОС И БАЗОВЫЕ СТИЛИ */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --primary: #667eea;
+            --primary-dark: #5a67d8;
+            --secondary: #f093fb;
+            --success: #34c759;
+            --warning: #ff9500;
+            --danger: #ff3b30;
+            --dark: #1d1d1f;
+            --light: #f5f5f7;
+            --border: #e5e5e7;
+            --radius: 12px;
+            --shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+        
+        [data-theme="dark"] {
+            --primary: #7c8efa;
+            --light: #1c1c1e;
+            --dark: #f5f5f7;
+            --border: #2c2c2e;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--light);
+            color: var(--dark);
+            line-height: 1.6;
+            min-height: 100vh;
+            transition: background 0.3s, color 0.3s;
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) 
+                     env(safe-area-inset-bottom) env(safe-area-inset-left);
+        }
+        
+        /* PWA УВЕДОМЛЕНИЯ */
+        #installPrompt {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: white;
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            z-index: 1000;
+            display: none;
+            border: 2px solid var(--primary);
+            animation: slideUp 0.3s ease;
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(100px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        #offlineAlert {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: var(--danger);
+            color: white;
+            padding: 12px;
+            text-align: center;
+            display: none;
+            z-index: 999;
+            font-weight: 500;
+        }
+        
+        /* КОНТЕЙНЕР */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* ШАПКА */
+        header {
+            background: linear-gradient(135deg, var(--primary), #764ba2);
+            color: white;
+            padding: 25px;
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        header::before {
+            content: 'PWA';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255,255,255,0.2);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        h1 {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        
+        .subtitle {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        
+        /* КНОПКИ PWA */
+        .pwa-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .pwa-btn {
+            padding: 8px 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.3s;
+        }
+        
+        .pwa-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        
+        /* ВКЛАДКИ */
+        .tabs {
+            display: flex;
+            background: white;
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 16px;
+            border: none;
+            background: white;
+            color: var(--dark);
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 15px;
+        }
+        
+        .tab.active {
+            background: var(--primary);
+            color: white;
+            font-weight: 600;
+        }
+        
+        /* СОДЕРЖИМОЕ ВКЛАДОК */
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        /* КАРТОЧКИ */
+        .card {
+            background: white;
+            border-radius: var(--radius);
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+        }
+        
+        .card h2 {
+            margin-bottom: 20px;
+            color: var(--dark);
+            font-size: 18px;
+        }
+        
+        /* ВВОД ДАННЫХ */
+        .input-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .input-group label {
+            font-weight: 500;
+            font-size: 14px;
+        }
+        
+        .input-group input, .input-group select {
+            padding: 12px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+        
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .unit {
+            font-size: 13px;
+            color: #666;
+            margin-left: 4px;
+        }
+        
+        /* ТОГГЛЫ */
+        .toggle-group {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .toggle-btn {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid var(--border);
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        
+        .toggle-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        /* КНОПКИ ДЕЙСТВИЙ */
+        .actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            flex: 1;
+        }
+        
+        .btn-secondary {
+            background: var(--light);
+            color: var(--dark);
+            border: 1px solid var(--border);
+        }
+        
+        /* РЕЗУЛЬТАТЫ */
+        .results {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .result-card {
+            border-left: 4px solid var(--primary);
+        }
+        
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .score {
+            font-size: 36px;
+            font-weight: 700;
+        }
+        
+        .score-max {
+            color: #666;
+            font-size: 16px;
+        }
+        
+        /* БЕЙДЖИ РИСКОВ */
+        .risk {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        
+        .risk-low { background: var(--success); color: white; }
+        .risk-medium { background: var(--warning); color: white; }
+        .risk-high { background: var(--danger); color: white; }
+        .risk-critical { background: var(--dark); color: white; }
+        
+        /* ИСТОРИЯ */
+        .history-item {
+            padding: 15px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .history-item:last-child {
+            border-bottom: none;
+        }
+        
+        .empty {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-style: italic;
+        }
+        
+        /* ИНФО */
+        .feature-list {
+            list-style: none;
+            margin: 15px 0;
+        }
+        
+        .feature-list li {
+            padding: 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .feature-list li::before {
+            content: '✓';
+            color: var(--success);
+            font-weight: bold;
+        }
+        
+        /* ФУТЕР */
+        footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        /* АДАПТИВНОСТЬ */
+        @media (max-width: 600px) {
+            .container { padding: 15px; }
+            .input-grid { grid-template-columns: 1fr; }
+            .results { grid-template-columns: 1fr; }
+            .actions { flex-direction: column; }
+            .tabs { flex-direction: column; }
+        }
+        
+        /* PWA СТАТУС БАР */
+        @media (display-mode: standalone) {
+            header { margin-top: env(safe-area-inset-top); }
+            body { padding-top: calc(env(safe-area-inset-top) + 20px); }
+        }
+    </style>
+</head>
+<body>
+    <!-- PWA УВЕДОМЛЕНИЯ -->
+    <div id="installPrompt">
+        <p style="margin-bottom: 15px; font-weight: 600;">Установить приложение?</p>
+        <p style="margin-bottom: 15px; font-size: 14px; color: #666;">Установите для быстрого доступа и работы в оффлайне</p>
+        <div style="display: flex; gap: 10px;">
+            <button id="installCancel" class="btn-secondary" style="flex: 1;">Позже</button>
+            <button id="installConfirm" class="btn-primary" style="flex: 1;">Установить</button>
+        </div>
+    </div>
+    
+    <div id="offlineAlert">📶 Вы работаете оффлайн</div>
+    
+    <!-- ОСНОВНОЙ КОНТЕЙНЕР -->
+    <div class="container">
+        <!-- ШАПКА -->
+        <header>
+            <h1>🧮 Калькулятор Сепсиса</h1>
+            <div class="subtitle">PWA • SOS + omqSOFA • Оффлайн</div>
+            
+            <div class="pwa-controls">
+                <button id="installBtn" class="pwa-btn" style="display: none;">
+                    📲 Установить
+                </button>
+                <button id="themeBtn" class="pwa-btn">
+                    🌙 Тема
+                </button>
+                <button id="shareBtn" class="pwa-btn">
+                    ↗️ Поделиться
+                </button>
+            </div>
+        </header>
+        
+        <!-- ВКЛАДКИ -->
+        <div class="tabs">
+            <button class="tab active" data-tab="calc">Калькулятор</button>
+            <button class="tab" data-tab="history">История</button>
+            <button class="tab" data-tab="info">О приложении</button>
+        </div>
+        
+        <!-- ВКЛАДКА КАЛЬКУЛЯТОРА -->
+        <section id="calc" class="tab-content active">
+            <!-- ПАРАМЕТРЫ -->
+            <div class="card">
+                <h2>📋 Параметры пациента</h2>
+                
+                <div class="input-grid">
+                    <div class="input-group">
+                        <label>Температура <span class="unit">°C</span></label>
+                        <input type="number" id="temp" placeholder="36.6" step="0.1">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>ЧСС <span class="unit">уд/мин</span></label>
+                        <input type="number" id="hr" placeholder="80">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>ЧДД <span class="unit">дых/мин</span></label>
+                        <input type="number" id="rr" placeholder="16">
+                        <small style="font-size: 12px; color: #666;">Учитывается в обеих шкалах</small>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>АД сист. <span class="unit">мм рт.ст.</span></label>
+                        <input type="number" id="sbp" placeholder="120">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>Сатурация <span class="unit">%</span></label>
+                        <input type="number" id="spo2" placeholder="98" min="70" max="100">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>Лейкоциты <span class="unit">×10⁹/л</span></label>
+                        <input type="number" id="wbc" placeholder="8.0" step="0.1">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>Лактат <span class="unit">ммоль/л</span></label>
+                        <input type="number" id="lactate" placeholder="1.0" step="0.1">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>Боль в животе</label>
+                        <div class="toggle-group">
+                            <button class="toggle-btn active" data-id="pain" data-value="no">Нет</button>
+                            <button class="toggle-btn" data-id="pain" data-value="yes">Да</button>
+                        </div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>Спутанность сознания</label>
+                        <div class="toggle-group">
+                            <button class="toggle-btn active" data-id="confusion" data-value="no">Нет</button>
+                            <button class="toggle-btn" data-id="confusion" data-value="yes">Да</button>
+                        </div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>Диурез</label>
+                        <select id="diuresis">
+                            <option value="normal">Нормальный</option>
+                            <option value="reduced">Сниженный</option>
+                            <option value="oliguria">Олигурия</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="actions">
+                    <button id="calculateBtn" class="btn btn-primary">🧮 Рассчитать</button>
+                    <button id="clearBtn" class="btn btn-secondary">🗑️ Очистить</button>
+                    <button id="demoBtn" class="btn btn-secondary">🧪 Демо</button>
+                </div>
+            </div>
+            
+            <!-- РЕЗУЛЬТАТЫ -->
+            <div class="results">
+                <div class="card result-card">
+                    <div class="result-header">
+                        <h3>SOS Score</h3>
+                        <div>
+                            <span class="score" id="sosScore">0</span>
+                            <span class="score-max">/11</span>
+                        </div>
+                    </div>
+                    <div class="risk risk-low" id="sosRisk">Низкий риск</div>
+                    <div id="sosDetails"></div>
+                </div>
+                
+                <div class="card result-card">
+                    <div class="result-header">
+                        <h3>omqSOFA</h3>
+                        <div>
+                            <span class="score" id="qsofaScore">0</span>
+                            <span class="score-max">/6</span>
+                        </div>
+                    </div>
+                    <div class="risk risk-low" id="qsofaRisk">Низкий риск</div>
+                    <div id="qsofaDetails"></div>
+                </div>
+            </div>
+            
+            <!-- ДЕЙСТВИЯ -->
+            <div class="card">
+                <h2>🎯 Рекомендации</h2>
+                <div id="interpretation" style="min-height: 60px; padding: 10px 0;">
+                    <p style="color: #666; font-style: italic;">Введите данные для расчета</p>
+                </div>
+                <div class="actions">
+                    <button id="saveBtn" class="btn btn-secondary">💾 Сохранить</button>
+                    <button id="exportBtn" class="btn btn-secondary">📤 Экспорт</button>
+                </div>
+            </div>
+        </section>
+        
+        <!-- ВКЛАДКА ИСТОРИИ -->
+        <section id="history" class="tab-content">
+            <div class="card">
+                <h2>📚 История расчетов</h2>
+                <div id="historyList" style="max-height: 400px; overflow-y: auto;">
+                    <p class="empty">История пуста</p>
+                </div>
+                <div class="actions" style="margin-top: 20px;">
+                    <button id="clearHistoryBtn" class="btn btn-secondary">🗑️ Очистить историю</button>
+                </div>
+            </div>
+        </section>
+        
+        <!-- ВКЛАДКА ИНФО -->
+        <section id="info" class="tab-content">
+            <div class="card">
+                <h2>ℹ️ О приложении</h2>
+                
+                <div style="margin: 20px 0;">
+                    <h3 style="margin-bottom: 10px;">🚀 PWA Возможности</h3>
+                    <ul class="feature-list">
+                        <li>Установка на домашний экран</li>
+                        <li>Работа без интернета</li>
+                        <li>Быстрая загрузка</li>
+                        <li>Push-уведомления</li>
+                        <li>Кроссплатформенность</li>
+                    </ul>
+                </div>
+                
+                <div style="margin: 20px 0;">
+                    <h3 style="margin-bottom: 10px;">📊 Используемые шкалы</h3>
+                    <p><strong>SOS:</strong> Sepsis Obstetric Score для беременных</p>
+                    <p><strong>omqSOFA:</strong> obstetric modified qSOFA</p>
+                    <p style="font-size: 13px; color: #666; margin-top: 10px;">
+                        ЧДД учитывается в обеих шкалах с разными критериями
+                    </p>
+                </div>
+                
+                <div style="margin: 20px 0; padding: 15px; background: #f5f5f7; border-radius: 8px;">
+                    <p style="font-size: 13px; color: #666;">
+                        <strong>💡 Совет:</strong> Добавьте это приложение на домашний экран для быстрого доступа
+                    </p>
+                </div>
+                
+                <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+                    <p style="font-size: 13px; color: #666;">Версия 1.0 • PWA • Для образовательных целей</p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- ФУТЕР -->
+        <footer>
+            <div style="margin-bottom: 10px;">
+                <span id="status">🌐 Онлайн</span> • 
+                <span id="storage">💾 0 KB</span>
+            </div>
+            <p>Создано для MacBook Air M4 • Все данные хранятся локально</p>
+        </footer>
+    </div>
+
+    <script>
+        // ==================== PWA ФУНКЦИОНАЛ ====================
+        
+        // Регистрация Service Worker (встроенный в HTML)
+        if ('serviceWorker' in navigator) {
+            const swCode = `
+                self.addEventListener('install', e => {
+                    e.waitUntil(caches.open('sepsis-v1').then(cache => 
+                        cache.addAll(['/'])
+                    ));
+                });
+                
+                self.addEventListener('fetch', e => {
+                    e.respondWith(
+                        caches.match(e.request).then(response => 
+                            response || fetch(e.request)
+                        )
+                    );
+                });
+            `;
+            
+            const blob = new Blob([swCode], { type: 'application/javascript' });
+            const swUrl = URL.createObjectURL(blob);
+            
+            navigator.serviceWorker.register(swUrl)
+                .then(() => console.log('✅ Service Worker зарегистрирован'))
+                .catch(err => console.log('❌ Ошибка SW:', err));
+        }
+        
+        // Установка PWA
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('installBtn').style.display = 'flex';
+            
+            // Показываем промпт через 5 секунд
+            setTimeout(() => {
+                if (deferredPrompt && !localStorage.getItem('installDismissed')) {
+                    document.getElementById('installPrompt').style.display = 'block';
+                }
+            }, 5000);
+        });
+        
+        document.getElementById('installBtn').onclick = () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then(choice => {
+                    if (choice.outcome === 'accepted') {
+                        console.log('✅ Пользователь установил PWA');
+                        document.getElementById('installBtn').style.display = 'none';
+                    }
+                    deferredPrompt = null;
+                });
+            }
+        };
+        
+        document.getElementById('installConfirm').onclick = () => {
+            document.getElementById('installPrompt').style.display = 'none';
+            if (deferredPrompt) deferredPrompt.prompt();
+        };
+        
+        document.getElementById('installCancel').onclick = () => {
+            document.getElementById('installPrompt').style.display = 'none';
+            localStorage.setItem('installDismissed', 'true');
+        };
+        
+        // Переключение темы
+        document.getElementById('themeBtn').onclick = () => {
+            const isDark = document.body.getAttribute('data-theme') === 'dark';
+            document.body.setAttribute('data-theme', isDark ? 'light' : 'dark');
+            localStorage.setItem('theme', isDark ? 'light' : 'dark');
+        };
+        
+        // Загрузка темы
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.body.setAttribute('data-theme', savedTheme);
+        
+        // Поделиться
+        document.getElementById('shareBtn').onclick = async () => {
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: 'Калькулятор сепсиса',
+                        text: 'PWA приложение для расчета риска сепсиса',
+                        url: window.location.href
+                    });
+                } catch (err) {
+                    console.log('Ошибка sharing:', err);
+                }
+            } else {
+                alert('Функция "Поделиться" не поддерживается');
+            }
+        };
+        
+        // ==================== ЛОГИКА КАЛЬКУЛЯТОРА ====================
+        
+        class Calculator {
+            constructor() {
+                this.init();
+            }
+            
+            init() {
+                this.setupListeners();
+                this.loadHistory();
+                this.updateStatus();
+            }
+            
+            setupListeners() {
+                // Авторасчет
+                document.querySelectorAll('input, select').forEach(el => {
+                    el.addEventListener('input', () => this.calculate());
+                });
+                
+                // Тогглы
+                document.querySelectorAll('.toggle-btn').forEach(btn => {
+                    btn.onclick = (e) => {
+                        const group = e.target.dataset.id;
+                        document.querySelectorAll(`[data-id="${group}"]`).forEach(b => 
+                            b.classList.remove('active')
+                        );
+                        e.target.classList.add('active');
+                        this.calculate();
+                    };
+                });
+                
+                // Кнопки
+                document.getElementById('calculateBtn').onclick = () => this.calculate();
+                document.getElementById('clearBtn').onclick = () => this.clear();
+                document.getElementById('demoBtn').onclick = () => this.demo();
+                document.getElementById('saveBtn').onclick = () => this.save();
+                document.getElementById('exportBtn').onclick = () => this.export();
+                document.getElementById('clearHistoryBtn').onclick = () => this.clearHistory();
+                
+                // Вкладки
+                document.querySelectorAll('.tab').forEach(tab => {
+                    tab.onclick = (e) => {
+                        const tabName = e.target.dataset.tab;
+                        this.switchTab(tabName);
+                    };
+                });
+                
+                // Онлайн статус
+                window.addEventListener('online', () => this.updateStatus());
+                window.addEventListener('offline', () => this.updateStatus());
+            }
+            
+            getParams() {
+                return {
+                    temp: parseFloat(document.getElementById('temp').value) || null,
+                    hr: parseInt(document.getElementById('hr').value) || null,
+                    rr: parseInt(document.getElementById('rr').value) || null,
+                    sbp: parseInt(document.getElementById('sbp').value) || null,
+                    spo2: parseInt(document.getElementById('spo2').value) || null,
+                    wbc: parseFloat(document.getElementById('wbc').value) || null,
+                    lactate: parseFloat(document.getElementById('lactate').value) || null,
+                    pain: document.querySelector('[data-id="pain"].active')?.dataset.value || 'no',
+                    confusion: document.querySelector('[data-id="confusion"].active')?.dataset.value || 'no',
+                    diuresis: document.getElementById('diuresis').value
+                };
+            }
+            
+            calculateSOS(params) {
+                let score = 0;
+                let details = [];
+                
+                // Температура
+                if (params.temp !== null) {
+                    let points = 0;
+                    if (params.temp >= 35.0 && params.temp <= 35.9) points = 1;
+                    else if (params.temp >= 38.1 && params.temp <= 39.0) points = 2;
+                    else if (params.temp > 39.0) points = 3;
+                    score += points;
+                    details.push(`Температура: ${points} балл${points !== 1 ? 'а' : ''}`);
+                }
+                
+                // ЧСС
+                if (params.hr !== null) {
+                    let points = 0;
+                    if (params.hr >= 90 && params.hr <= 99) points = 1;
+                    else if (params.hr >= 100) points = 2;
+                    score += points;
+                    details.push(`ЧСС: ${points} балл${points !== 1 ? 'а' : ''}`);
+                }
+                
+                // ЧДД для SOS
+                if (params.rr !== null) {
+                    let points = 0;
+                    if (params.rr >= 21 && params.rr <= 24) points = 1;
+                    else if (params.rr >= 25) points = 2;
+                    score += points;
+                    details.push(`ЧДД (SOS): ${points} балл${points !== 1 ? 'а' : ''}`);
+                }
+                
+                // Лейкоциты
+                if (params.wbc !== null) {
+                    let points = 0;
+                    if (params.wbc >= 12.0 && params.wbc <= 16.9) points = 1;
+                    else if (params.wbc >= 17.0) points = 2;
+                    score += points;
+                    details.push(`Лейкоциты: ${points} балл${points !== 1 ? 'а' : ''}`);
+                }
+                
+                // Боль в животе
+                let painPoints = params.pain === 'yes' ? 2 : 0;
+                score += painPoints;
+                details.push(`Боль: ${painPoints} балл${painPoints !== 1 ? 'а' : ''}`);
+                
+                return { score, details, max: 11 };
+            }
+            
+            calculateOmqSOFA(params) {
+                let score = 0;
+                let details = [];
+                
+                // АД
+                if (params.sbp !== null) {
+                    let points = params.sbp <= 100 ? 1 : 0;
+                    score += points;
+                    details.push(`АД: ${points} балл`);
+                }
+                
+                // ЧДД для omqSOFA
+                if (params.rr !== null) {
+                    let points = params.rr >= 22 ? 1 : 0;
+                    score += points;
+                    details.push(`ЧДД (omqSOFA): ${points} балл`);
+                }
+                
+                // Сознание
+                let confusionPoints = params.confusion === 'yes' ? 1 : 0;
+                score += confusionPoints;
+                details.push(`Сознание: ${confusionPoints} балл`);
+                
+                // Сатурация
+                if (params.spo2 !== null) {
+                    let points = params.spo2 < 95 ? 1 : 0;
+                    score += points;
+                    details.push(`Сатурация: ${points} балл`);
+                }
+                
+                // Диурез
+                let diuresisPoints = 0;
+                if (params.diuresis === 'reduced') diuresisPoints = 1;
+                else if (params.diuresis === 'oliguria') diuresisPoints = 2;
+                score += diuresisPoints;
+                details.push(`Диурез: ${diuresisPoints} балл${diuresisPoints !== 1 ? 'а' : ''}`);
+                
+                // Лактат
+                if (params.lactate !== null) {
+                    let points = 0;
+                    if (params.lactate >= 2.0 && params.lactate <= 3.9) points = 1;
+                    else if (params.lactate >= 4.0) points = 2;
+                    score += points;
+                    details.push(`Лактат: ${points} балл${points !== 1 ? 'а' : ''}`);
+                }
+                
+                return { score, details, max: 6 };
+            }
+            
+            calculate() {
+                const params = this.getParams();
+                const sos = this.calculateSOS(params);
+                const qsofa = this.calculateOmqSOFA(params);
+                
+                // Обновление UI
+                document.getElementById('sosScore').textContent = sos.score;
+                document.getElementById('qsofaScore').textContent = qsofa.score;
+                
+                document.getElementById('sosDetails').innerHTML = 
+                    sos.details.map(d => `<div style="padding: 4px 0; font-size: 14px;">${d}</div>`).join('');
+                
+                document.getElementById('qsofaDetails').innerHTML = 
+                    qsofa.details.map(d => `<div style="padding: 4px 0; font-size: 14px;">${d}</div>`).join('');
+                
+                // Риски
+                this.updateRisks(sos.score, qsofa.score);
+                
+                // Интерпретация
+                this.updateInterpretation(sos, qsofa);
+            }
+            
+            updateRisks(sosScore, qsofaScore) {
+                const sosRisk = this.getRisk(sosScore, 'sos');
+                const qsofaRisk = this.getRisk(qsofaScore, 'qsofa');
+                
+                const sosEl = document.getElementById('sosRisk');
+                sosEl.textContent = sosRisk.text;
+                sosEl.className = `risk risk-${sosRisk.level}`;
+                
+                const qsofaEl = document.getElementById('qsofaRisk');
+                qsofaEl.textContent = qsofaRisk.text;
+                qsofaEl.className = `risk risk-${qsofaRisk.level}`;
+            }
+            
+            getRisk(score, type) {
+                if (type === 'sos') {
+                    if (score === 0) return { level: 'low', text: 'Низкий' };
+                    if (score <= 3) return { level: 'medium', text: 'Средний' };
+                    if (score <= 5) return { level: 'high', text: 'Высокий' };
+                    return { level: 'critical', text: 'Критический' };
+                } else {
+                    if (score === 0) return { level: 'low', text: 'Низкий' };
+                    if (score === 1) return { level: 'medium', text: 'Средний' };
+                    if (score === 2) return { level: 'high', text: 'Высокий' };
+                    return { level: 'critical', text: 'Критический' };
+                }
+            }
+            
+            updateInterpretation(sos, qsofa) {
+                const el = document.getElementById('interpretation');
+                
+                if (sos.score === 0 && qsofa.score === 0) {
+                    el.innerHTML = '<p style="color: #666; font-style: italic;">Введите данные для расчета</p>';
+                    return;
+                }
+                
+                let html = `<p><strong>SOS:</strong> ${sos.score} баллов</p>`;
+                html += `<p><strong>omqSOFA:</strong> ${qsofa.score} баллов</p>`;
+                
+                if (sos.score >= 6 || qsofa.score >= 3) {
+                    html += `<p style="color: #ff3b30; margin-top: 10px; font-weight: 600;">
+                        🚨 Критический риск! Требуется срочная госпитализация
+                    </p>`;
+                } else if (sos.score >= 4 || qsofa.score >= 2) {
+                    html += `<p style="color: #ff9500; margin-top: 10px; font-weight: 600;">
+                        ⚠️ Высокий риск! Консультация врача необходима
+                    </p>`;
+                }
+                
+                el.innerHTML = html;
+            }
+            
+            clear() {
+                document.querySelectorAll('input').forEach(i => i.value = '');
+                document.getElementById('diuresis').value = 'normal';
+                document.querySelectorAll('.toggle-btn').forEach(btn => {
+                    if (btn.dataset.value === 'no') btn.classList.add('active');
+                    else btn.classList.remove('active');
+                });
+                this.calculate();
+            }
+            
+            demo() {
+                document.getElementById('temp').value = 39.2;
+                document.getElementById('hr').value = 115;
+                document.getElementById('rr').value = 26;
+                document.getElementById('sbp').value = 95;
+                document.getElementById('spo2').value = 92;
+                document.getElementById('wbc').value = 17.5;
+                document.getElementById('lactate').value = 3.8;
+                
+                document.querySelector('[data-id="pain"][data-value="yes"]').click();
+                document.querySelector('[data-id="confusion"][data-value="yes"]').click();
+                document.getElementById('diuresis').value = 'reduced';
+                
+                this.calculate();
+                alert('Загружены демо-данные тяжелого случая');
+            }
+            
+            save() {
+                const params = this.getParams();
+                const sos = this.calculateSOS(params);
+                const qsofa = this.calculateOmqSOFA(params);
+                
+                const result = {
+                    id: Date.now(),
+                    date: new Date().toLocaleString('ru-RU'),
+                    sos: sos.score,
+                    qsofa: qsofa.score,
+                    params: params
+                };
+                
+                let history = JSON.parse(localStorage.getItem('sepsisHistory') || '[]');
+                history.unshift(result);
+                if (history.length > 50) history = history.slice(0, 50);
+                
+                localStorage.setItem('sepsisHistory', JSON.stringify(history));
+                this.loadHistory();
+                this.updateStatus();
+                
+                // Уведомление
+                if ('Notification' in window && Notification.permission === 'granted') {
+                    new Notification('Результат сохранён', {
+                        body: `SOS: ${sos.score}, omqSOFA: ${qsofa.score}`,
+                        icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTcgMjFMMjEgMTdNMTcuMjUgMTIuMjVMMjEuMjUgOC4yNU0xNiAyMEwxOC41IDIwQzE5LjMyODQgMjAgMjAgMTkuMzI4NCAyMCAxOC41VjUuNUMyMCA0LjY3MTU3IDE5LjMyODQgNCAxOC41IDRINS41QzQuNjcxNTcgNCA0IDQuNjcxNTcgNCA1LjVWMTguNUM0IDE5LjMyODQgNC42NzE1NyAyMCA1LjUgMjBIMTZNMTYgMjBIMTBWMTFMMTYgMjBaIiBzdHJva2U9IiM2NjdlZWEiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+PC9zdmc+'
+                    });
+                }
+            }
+            
+            loadHistory() {
+                const history = JSON.parse(localStorage.getItem('sepsisHistory') || '[]');
+                const list = document.getElementById('historyList');
+                
+                if (history.length === 0) {
+                    list.innerHTML = '<p class="empty">История пуста</p>';
+                    return;
+                }
+                
+                list.innerHTML = history.map(item => `
+                    <div class="history-item">
+                        <div>
+                            <div style="font-size: 14px; color: #666;">${item.date}</div>
+                            <div>SOS: ${item.sos} • omqSOFA: ${item.qsofa}</div>
+                        </div>
+                        <button onclick="calc.loadHistoryItem(${item.id})" 
+                                style="padding: 8px 16px; background: var(--primary); color: white; border: none; border-radius: 6px; cursor: pointer;">
+                            Загрузить
+                        </button>
+                    </div>
+                `).join('');
+            }
+            
+            loadHistoryItem(id) {
+                const history = JSON.parse(localStorage.getItem('sepsisHistory') || '[]');
+                const item = history.find(h => h.id === id);
+                
+                if (item) {
+                    // Заполняем поля
+                    const fields = ['temp', 'hr', 'rr', 'sbp', 'spo2', 'wbc', 'lactate'];
+                    fields.forEach(field => {
+                        if (item.params[field]) document.getElementById(field).value = item.params[field];
+                    });
+                    
+                    // Тогглы
+                    if (item.params.pain) {
+                        document.querySelector(`[data-id="pain"][data-value="${item.params.pain}"]`).click();
+                    }
+                    if (item.params.confusion) {
+                        document.querySelector(`[data-id="confusion"][data-value="${item.params.confusion}"]`).click();
+                    }
+                    
+                    // Селект
+                    if (item.params.diuresis) {
+                        document.getElementById('diuresis').value = item.params.diuresis;
+                    }
+                    
+                    this.calculate();
+                    this.switchTab('calc');
+                }
+            }
+            
+            clearHistory() {
+                if (confirm('Очистить всю историю?')) {
+                    localStorage.removeItem('sepsisHistory');
+                    this.loadHistory();
+                    this.updateStatus();
+                }
+            }
+            
+            export() {
+                const params = this.getParams();
+                const sos = this.calculateSOS(params);
+                const qsofa = this.calculateOmqSOFA(params);
+                
+                const data = `
+Результаты расчета ${new Date().toLocaleString('ru-RU')}
+
+ПАРАМЕТРЫ:
+Температура: ${params.temp || '-'}°C
+ЧСС: ${params.hr || '-'} уд/мин
+ЧДД: ${params.rr || '-'} дых/мин
+АД: ${params.sbp || '-'} мм рт.ст.
+Сатурация: ${params.spo2 || '-'}%
+Лейкоциты: ${params.wbc || '-'}×10⁹/л
+Лактат: ${params.lactate || '-'} ммоль/л
+Боль: ${params.pain === 'yes' ? 'Да' : 'Нет'}
+Сознание: ${params.confusion === 'yes' ? 'Да' : 'Нет'}
+Диурез: ${params.diuresis}
+
+РЕЗУЛЬТАТЫ:
+SOS: ${sos.score} баллов (${this.getRisk(sos.score, 'sos').text} риск)
+omqSOFA: ${qsofa.score} баллов (${this.getRisk(qsofa.score, 'qsofa').text} риск)
+
+Создано в PWA калькуляторе сепсиса
+                `.trim();
+                
+                const blob = new Blob([data], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `sepsis-${Date.now()}.txt`;
+                a.click();
+                URL.revokeObjectURL(url);
+            }
+            
+            switchTab(tabName) {
+                // Кнопки
+                document.querySelectorAll('.tab').forEach(tab => {
+                    tab.classList.toggle('active', tab.dataset.tab === tabName);
+                });
+                
+                // Контент
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.toggle('active', content.id === tabName);
+                });
+            }
+            
+            updateStatus() {
+                // Онлайн статус
+                const isOnline = navigator.onLine;
+                document.getElementById('status').textContent = isOnline ? '🌐 Онлайн' : '📶 Оффлайн';
+                document.getElementById('offlineAlert').style.display = isOnline ? 'none' : 'block';
+                
+                // Хранилище
+                const history = JSON.parse(localStorage.getItem('sepsisHistory') || '[]');
+                const size = JSON.stringify(localStorage).length;
+                document.getElementById('storage').textContent = `💾 ${Math.round(size/1024)} KB`;
+                
+                // Запрос разрешения на уведомления
+                if ('Notification' in window && Notification.permission === 'default') {
+                    Notification.requestPermission();
+                }
+            }
+        }
+        
+        // ==================== ЗАПУСК ПРИЛОЖЕНИЯ ====================
+        
+        const calc = new Calculator();
+        window.calc = calc;
+        
+        // Первоначальный расчет
+        calc.calculate();
+        
+        // Обновление статуса каждые 30 сек
+        setInterval(() => calc.updateStatus(), 30000);
+        
+        console.log('🚀 PWA калькулятор сепсиса запущен!');
+        console.log('Доступные команды: calc.demo(), calc.clear(), calc.save()');
+    </script>
+</body>
+</html>
