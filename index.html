@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Калькулятор оценки риска сепсиса в акушерстве</title>
+    <title>Калькулятор оценки сепсиса в акушерстве</title>
     <meta name="description" content="Онлайн-калькулятор для оценки риска сепсиса у беременных и родильниц">
     <meta name="theme-color" content="#2196F3">
     <link rel="manifest" href="manifest.json">
@@ -174,10 +174,21 @@
             color: var(--primary-dark);
         }
         
+        .score-container {
+            text-align: right;
+        }
+        
         .score {
             font-size: 32px;
             font-weight: 700;
             color: var(--primary);
+            line-height: 1;
+        }
+        
+        .params-count {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
         }
         
         .risk-indicator {
@@ -265,7 +276,7 @@
 <body>
     <div class="container">
         <header>
-            <h1>🩺 Калькулятор оценки риска сепсиса в акушерстве</h1>
+            <h1>🩺 Калькулятор оценки сепсиса в акушерстве</h1>
             <p class="subtitle">Единый ввод параметров - автоматический расчёт по всем шкалам</p>
         </header>
         
@@ -287,11 +298,9 @@
         </div>
         
         <footer>
-    <p>Используйте для оценки риска сепсиса у беременных и родильниц. Все расчёты производятся локально в вашем браузере, ваши данные не сохраняются и не передаются.</p>
-    <p>Алгоритм основан на актуальных клинических рекомендациях и данных литературы.</p>
-    <p><strong>Для точной диагностики и лечения обязательно обратитесь к специалисту.</strong> Данный инструмент носит исключительно вспомогательный и ознакомительный характер.</p>
-    <p>Версия 1.0. © chTPV, 2026. </p>
-</footer>
+            <p>Используйте для оценки риска сепсиса у беременных и родильниц. Все расчёты производятся локально в вашем браузере.</p>
+            <p>Для точной диагностики обратитесь к специалисту.</p>
+        </footer>
     </div>
     
     <div class="pwa-banner" id="pwaBanner">
@@ -343,13 +352,43 @@
             }
         ];
 
-        // Шкалы для расчёта
+        // Шкалы для расчёта с информацией о параметрах
         const scales = [
-            { id: 'sirs', name: 'SIRS', maxScore: 4, calculate: calculateSIRS },
-            { id: 'omqsofa', name: 'omqSOFA', maxScore: 3, calculate: calculateOmqSOFA },
-            { id: 'moews', name: 'MOEWS', maxScore: 24, calculate: calculateMOEWS },
-            { id: 'sos', name: 'SOS', maxScore: 24, calculate: calculateSOS },
-            { id: 'qsofa', name: 'qSOFA', maxScore: 3, calculate: calculateQSOFA }
+            { 
+                id: 'sirs', 
+                name: 'SIRS', 
+                maxScore: 4, 
+                totalParams: 4, // Всего параметров в шкале
+                calculate: calculateSIRS 
+            },
+            { 
+                id: 'omqsofa', 
+                name: 'omqSOFA', 
+                maxScore: 3, 
+                totalParams: 3,
+                calculate: calculateOmqSOFA 
+            },
+            { 
+                id: 'moews', 
+                name: 'MOEWS', 
+                maxScore: 24, 
+                totalParams: 9, // 9 параметров в MOEWS
+                calculate: calculateMOEWS 
+            },
+            { 
+                id: 'sos', 
+                name: 'SOS', 
+                maxScore: 24, 
+                totalParams: 8, // 8 параметров в SOS
+                calculate: calculateSOS 
+            },
+            { 
+                id: 'qsofa', 
+                name: 'qSOFA', 
+                maxScore: 3, 
+                totalParams: 3,
+                calculate: calculateQSOFA 
+            }
         ];
 
         let deferredPrompt;
@@ -420,7 +459,10 @@
                 card.innerHTML = `
                     <div class="scale-header">
                         <div class="scale-name">${scale.name}</div>
-                        <div class="score" id="score-${scale.id}">0</div>
+                        <div class="score-container">
+                            <div class="score" id="score-${scale.id}">0</div>
+                            <div class="params-count" id="params-${scale.id}">0/${scale.totalParams}</div>
+                        </div>
                     </div>
                     <div class="risk-indicator" id="risk-${scale.id}">Не рассчитано</div>
                     <div class="interpretation" id="interpretation-${scale.id}">Введите данные пациента</div>
@@ -467,7 +509,7 @@
                     element.classList.remove('critical', 'warning', 'normal');
                     
                     if (value !== null) {
-                        // Пример логики подсветки (можно расширить для каждого параметра)
+                        // Пример логики подсветки
                         if (param.id === 'temp') {
                             if (value > 38.5 || value < 36) element.classList.add('critical');
                             else if (value > 37.5 || value < 36.5) element.classList.add('warning');
@@ -480,6 +522,10 @@
                             if (value < 90 || value > 160) element.classList.add('critical');
                             else if (value < 100 || value > 140) element.classList.add('warning');
                             else element.classList.add('normal');
+                        } else if (param.id === 'rr') {
+                            if (value > 25 || value < 10) element.classList.add('critical');
+                            else if (value > 20 || value < 12) element.classList.add('warning');
+                            else element.classList.add('normal');
                         }
                     }
                 }
@@ -489,6 +535,7 @@
         // Обновление карточки шкалы
         function updateScaleCard(scaleId, result) {
             document.getElementById(`score-${scaleId}`).textContent = result.score;
+            document.getElementById(`params-${scaleId}`).textContent = `${result.usedParams}/${result.totalParams}`;
             
             const riskElement = document.getElementById(`risk-${scaleId}`);
             riskElement.textContent = result.risk;
@@ -500,11 +547,24 @@
         // Функции расчёта для каждой шкалы
         function calculateSIRS(values) {
             let score = 0;
+            let usedParams = 0;
             
-            if (values.temp !== null && (values.temp > 38 || values.temp < 36)) score++;
-            if (values.hr !== null && values.hr > 90) score++;
-            if (values.rr !== null && values.rr > 20) score++;
-            if (values.wbc !== null && (values.wbc > 12 || values.wbc < 4)) score++;
+            if (values.temp !== null) {
+                usedParams++;
+                if (values.temp > 38 || values.temp < 36) score++;
+            }
+            if (values.hr !== null) {
+                usedParams++;
+                if (values.hr > 90) score++;
+            }
+            if (values.rr !== null) {
+                usedParams++;
+                if (values.rr > 20) score++;
+            }
+            if (values.wbc !== null) {
+                usedParams++;
+                if (values.wbc > 12 || values.wbc < 4) score++;
+            }
             
             const risk = score >= 2 ? 'Высокий риск' : 'Низкий риск';
             const riskClass = score >= 2 ? 'high-risk' : 'low-risk';
@@ -512,15 +572,32 @@
                 ? 'Пациент соответствует критериям SIRS'
                 : 'Пациент не соответствует критериям SIRS';
                 
-            return { score, risk, riskClass, interpretation };
+            return { 
+                score, 
+                usedParams, 
+                totalParams: 4, 
+                risk, 
+                riskClass, 
+                interpretation 
+            };
         }
 
         function calculateOmqSOFA(values) {
             let score = 0;
+            let usedParams = 0;
             
-            if (values.sbp !== null && values.sbp < 90) score++;
-            if (values.rr !== null && values.rr > 25) score++;
-            if (values.mental === 'not_alert') score++;
+            if (values.sbp !== null) {
+                usedParams++;
+                if (values.sbp < 90) score++;
+            }
+            if (values.rr !== null) {
+                usedParams++;
+                if (values.rr > 25) score++;
+            }
+            if (values.mental) {
+                usedParams++;
+                if (values.mental === 'not_alert') score++;
+            }
             
             const risk = score >= 2 ? 'Высокий риск' : 'Низкий риск';
             const riskClass = score >= 2 ? 'high-risk' : 'low-risk';
@@ -528,14 +605,23 @@
                 ? 'Показана госпитализация в ОРИТ'
                 : 'Требуется наблюдение';
                 
-            return { score, risk, riskClass, interpretation };
+            return { 
+                score, 
+                usedParams, 
+                totalParams: 3, 
+                risk, 
+                riskClass, 
+                interpretation 
+            };
         }
 
         function calculateMOEWS(values) {
             let score = 0;
+            let usedParams = 0;
             
             // Температура
             if (values.temp !== null) {
+                usedParams++;
                 if (values.temp >= 39 || values.temp <= 35) score += 3;
                 else if (values.temp >= 38.1 && values.temp <= 38.9) score += 2;
                 else if ((values.temp >= 35.1 && values.temp <= 35.9) || 
@@ -544,6 +630,7 @@
             
             // ЧД
             if (values.rr !== null) {
+                usedParams++;
                 if (values.rr >= 30 || values.rr < 10) score += 3;
                 else if (values.rr >= 21 && values.rr <= 29) score += 2;
                 else if (values.rr >= 10 && values.rr <= 11) score += 1;
@@ -551,17 +638,22 @@
             
             // SpO2
             if (values.spo2 !== null) {
+                usedParams++;
                 if (values.spo2 <= 90) score += 3;
                 else if (values.spo2 >= 91 && values.spo2 <= 93) score += 2;
                 else if (values.spo2 >= 94 && values.spo2 <= 95) score += 1;
             }
             
             // Кислородная терапия
-            if (values.o2_therapy === 'mask') score += 3;
-            else if (values.o2_therapy === 'nasal') score += 2;
+            if (values.o2_therapy) {
+                usedParams++;
+                if (values.o2_therapy === 'mask') score += 3;
+                else if (values.o2_therapy === 'nasal') score += 2;
+            }
             
             // ЧСС
             if (values.hr !== null) {
+                usedParams++;
                 if (values.hr < 50 || values.hr >= 130) score += 3;
                 else if ((values.hr >= 50 && values.hr <= 59) || 
                          (values.hr >= 110 && values.hr <= 129)) score += 2;
@@ -570,6 +662,7 @@
             
             // АД систолическое
             if (values.sbp !== null) {
+                usedParams++;
                 if (values.sbp < 90 || values.sbp >= 160) score += 3;
                 else if (values.sbp >= 150 && values.sbp <= 159) score += 2;
                 else if ((values.sbp >= 90 && values.sbp <= 99) || 
@@ -578,6 +671,7 @@
             
             // АД диастолическое
             if (values.dbp !== null) {
+                usedParams++;
                 if (values.dbp >= 110) score += 3;
                 else if (values.dbp >= 100 && values.dbp <= 109) score += 2;
                 else if (values.dbp <= 45 || 
@@ -585,10 +679,16 @@
             }
             
             // Ментальный статус
-            if (values.mental === 'not_alert') score += 3;
+            if (values.mental) {
+                usedParams++;
+                if (values.mental === 'not_alert') score += 3;
+            }
             
             // ППК/риск ССЗ
-            if (values.pph === 'yes') score += 3;
+            if (values.pph) {
+                usedParams++;
+                if (values.pph === 'yes') score += 3;
+            }
             
             let risk, riskClass, interpretation;
             if (score <= 2) {
@@ -605,14 +705,23 @@
                 interpretation = 'Показана госпитализация в ОРИТ';
             }
             
-            return { score, risk, riskClass, interpretation };
+            return { 
+                score, 
+                usedParams, 
+                totalParams: 9, 
+                risk, 
+                riskClass, 
+                interpretation 
+            };
         }
 
         function calculateSOS(values) {
             let score = 0;
+            let usedParams = 0;
             
             // Температура
             if (values.temp !== null) {
+                usedParams++;
                 if (values.temp > 40.9 || values.temp < 30) score += 4;
                 else if ((values.temp >= 39 && values.temp <= 40.9) || 
                          (values.temp >= 30 && values.temp <= 31.9)) score += 3;
@@ -623,6 +732,7 @@
             
             // ЧСС
             if (values.hr !== null) {
+                usedParams++;
                 if (values.hr > 179) score += 4;
                 else if (values.hr >= 150 && values.hr <= 179) score += 3;
                 else if (values.hr >= 130 && values.hr <= 149) score += 2;
@@ -631,6 +741,7 @@
             
             // ЧД
             if (values.rr !== null) {
+                usedParams++;
                 if (values.rr > 49 || values.rr <= 5) score += 4;
                 else if (values.rr >= 35 && values.rr <= 49) score += 3;
                 else if (values.rr >= 6 && values.rr <= 9) score += 2;
@@ -640,12 +751,14 @@
             
             // АД систолическое
             if (values.sbp !== null) {
+                usedParams++;
                 if (values.sbp < 70) score += 4;
                 else if (values.sbp >= 70 && values.sbp <= 90) score += 2;
             }
             
             // SpO2
             if (values.spo2 !== null) {
+                usedParams++;
                 if (values.spo2 < 85) score += 4;
                 else if (values.spo2 >= 85 && values.spo2 <= 89) score += 3;
                 else if (values.spo2 >= 90 && values.spo2 <= 91) score += 1;
@@ -653,6 +766,7 @@
             
             // Лейкоциты
             if (values.wbc !== null) {
+                usedParams++;
                 if (values.wbc > 39.9 || values.wbc < 1) score += 4;
                 else if ((values.wbc >= 25 && values.wbc <= 39.9) || 
                          (values.wbc >= 1 && values.wbc <= 2.9)) score += 2;
@@ -661,10 +775,16 @@
             }
             
             // Юные нейтрофилы
-            if (values.bands !== null && values.bands >= 10) score += 2;
+            if (values.bands !== null) {
+                usedParams++;
+                if (values.bands >= 10) score += 2;
+            }
             
             // Лактат
-            if (values.lactate !== null && values.lactate >= 4) score += 2;
+            if (values.lactate !== null) {
+                usedParams++;
+                if (values.lactate >= 4) score += 2;
+            }
             
             const risk = score >= 6 ? 'Высокий риск' : 'Низкий риск';
             const riskClass = score >= 6 ? 'high-risk' : 'low-risk';
@@ -672,15 +792,32 @@
                 ? 'Показана госпитализация в ОРИТ'
                 : 'Риск сепсиса низкий';
                 
-            return { score, risk, riskClass, interpretation };
+            return { 
+                score, 
+                usedParams, 
+                totalParams: 8, 
+                risk, 
+                riskClass, 
+                interpretation 
+            };
         }
 
         function calculateQSOFA(values) {
             let score = 0;
+            let usedParams = 0;
             
-            if (values.sbp !== null && values.sbp < 100) score++;
-            if (values.rr !== null && values.rr > 22) score++;
-            if (values.gcs !== null && values.gcs < 13) score++;
+            if (values.sbp !== null) {
+                usedParams++;
+                if (values.sbp < 100) score++;
+            }
+            if (values.rr !== null) {
+                usedParams++;
+                if (values.rr > 22) score++;
+            }
+            if (values.gcs !== null) {
+                usedParams++;
+                if (values.gcs < 13) score++;
+            }
             
             const risk = score >= 2 ? 'Высокий риск' : 'Низкий риск';
             const riskClass = score >= 2 ? 'high-risk' : 'low-risk';
@@ -688,7 +825,14 @@
                 ? 'Показана госпитализация в ОРИТ'
                 : 'Требуется наблюдение';
                 
-            return { score, risk, riskClass, interpretation };
+            return { 
+                score, 
+                usedParams, 
+                totalParams: 3, 
+                risk, 
+                riskClass, 
+                interpretation 
+            };
         }
 
         // Сброс всех значений
