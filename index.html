@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Калькулятор оценки сепсиса в акушерстве</title>
+    <title>Калькулятор оценки риска развития сепсиса в акушерстве</title>
     <meta name="description" content="Онлайн-калькулятор для оценки риска сепсиса у беременных и родильниц">
     <meta name="theme-color" content="#2196F3">
     <link rel="manifest" href="manifest.json">
@@ -276,7 +276,7 @@
 <body>
     <div class="container">
         <header>
-            <h1>🩺 Калькулятор оценки сепсиса в акушерстве</h1>
+            <h1>Калькулятор оценки сепсиса в акушерстве</h1>
             <p class="subtitle">Единый ввод параметров - автоматический расчёт по всем шкалам</p>
         </header>
         
@@ -361,6 +361,13 @@
                 totalParams: 4, // Всего параметров в шкале
                 calculate: calculateSIRS 
             },
+             { 
+                id: 'qsofa', 
+                name: 'qSOFA', 
+                maxScore: 3, 
+                totalParams: 3,
+                calculate: calculateQSOFA 
+            },
             { 
                 id: 'omqsofa', 
                 name: 'omqSOFA', 
@@ -381,13 +388,6 @@
                 maxScore: 24, 
                 totalParams: 8, // 8 параметров в SOS
                 calculate: calculateSOS 
-            },
-            { 
-                id: 'qsofa', 
-                name: 'qSOFA', 
-                maxScore: 3, 
-                totalParams: 3,
-                calculate: calculateQSOFA 
             }
         ];
 
